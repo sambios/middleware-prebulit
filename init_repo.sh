@@ -3,17 +3,21 @@ INSTALL_DIR=$DIR/install
 mkdir -p $INSTALL_DIR
 export PKG_CONFIG_PATH=$INSTALL_DIR/lib/pkgconfig
 export CROSS_COMPILE=aarch64-linux-gnu-
+export CC=aarch64-linux-gnu-gcc
+export CXX=aarch64-linux-gnu-g++
+HOST=arm
 
 # get zlib 
 function build_zlib() {
-    if [ -e zlib ];then
-       rm -fr zlib
+    if [ ! -e zlib ];then
+       #rm -fr zlib
+       git clone https://github.com/madler/zlib.git zlib
     fi
     
-    git clone https://github.com/madler/zlib.git zlib
     cd zlib
     git checkout v1.2.8
-    ./configure --prefix=$INSTALL_DIR
+    ./configure --prefix=$INSTALL_DIR --host=$HOST --static
+    make clean
     make -j4 && make install
     cd ..
 }
@@ -32,7 +36,8 @@ function build_osip()
     rm -fr libosip2-$OSIP_VERSION
     tar zxf libosip2-$OSIP_VERSION.tar.gz
     cd libosip2-$OSIP_VERSION
-    ./configure --enable-static --disable-shared --prefix=$INSTALL_DIR
+    ./configure --enable-static --disable-shared --prefix=$INSTALL_DIR --host=$HOST
+    make clean
     make -j4 && make install
     cd ..
     # exosip2
@@ -42,7 +47,8 @@ function build_osip()
     rm -fr libexosip2-$OSIP_VERSION
     tar zxf libexosip2-$OSIP_VERSION.tar.gz
     cd libexosip2-$OSIP_VERSION
-    ./configure --enable-static --disable-shared --prefix=$INSTALL_DIR
+    ./configure --enable-static --disable-shared --prefix=$INSTALL_DIR --host=$HOST
+    make clean
     make -j4 && make install
     cd ..
 }
@@ -58,6 +64,7 @@ function build_freetype()
     tar zxf freetype-2.9.1.tar.gz
     cd freetype-2.9.1
     ./configure --prefix=$INSTALL_DIR --enable-static --disable-shared
+    make clean
     make -j4 && make install
     cd ..
 
@@ -74,7 +81,21 @@ function build_openssl()
     git checkout OpenSSL_1_0_0-stable
     ./config --prefix=$INSTALL_DIR 
     sed -i 's/-m64//g' Makefile
+    make clean
     make -j4 && make install
+    cd ..
+}
+
+# build python2.7
+function build_python27()
+{
+    if [ ! -e Python-2.7.13.tgz ];then
+        wget https://www.python.org/ftp/python/2.7.13/Python-2.7.13.tgz
+    fi
+
+    tar zxf Python-2.7.13.tgz
+    cd Python-2.7.13
+
     cd ..
 }
 
@@ -82,10 +103,9 @@ function build_openssl()
 
 
 
-
-
 #build_zlib
+build_openssl
 #build_osip
 #build_freetype
-build_openssl
+#build_python27
 
