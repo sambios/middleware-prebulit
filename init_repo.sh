@@ -2,10 +2,23 @@ DIR=`pwd`
 INSTALL_DIR=$DIR/install
 mkdir -p $INSTALL_DIR
 export PKG_CONFIG_PATH=$INSTALL_DIR/lib/pkgconfig
-#export CROSS_COMPILE=sw_64-sunway-linux-gnu-
-export CC=sw_64-sunway-linux-gnu-gcc
-export CXX=sw_64-sunway-linux-gnu-g++
-HOST=sw_64-sunway
+CPU_TYPE=sw_64
+if [ "$CPU_TYPE" == "sw_64" ];then
+
+    #export CROSS_COMPILE=sw_64-sunway-linux-gnu-
+    export CC=sw_64-sunway-linux-gnu-gcc
+    export CXX=sw_64-sunway-linux-gnu-g++
+    HOST=sw_64-sunway-linux-gnu
+fi
+
+# aarch64 platform example
+if [ "$CPU_TYPE" == "aarch64" ]; then
+    #export CROSS_COMPILE=sw_64-sunway-linux-gnu-
+    export CC=aarch64-linux-gnu-gcc
+    export CXX=aarch64-linux-gnu-g++
+    HOST=aarch64-linux-gnu
+fi
+
 export PREFIX=$INSTALL_DIR
 
 # get zlib 
@@ -17,6 +30,7 @@ function build_zlib() {
     fi
     
     cd zlib
+    echo cc=$CC
     ./configure --prefix=$INSTALL_DIR --static
     make clean
     make -j4 && make install
@@ -137,11 +151,11 @@ if [ ! -e libpng-1.6.37.tar.gz ]; then
 fi
 
 cd libpng-1.6.37
-./configure --enable-hardware-optimizations=no --host=aarch64-linux
+./configure --enable-hardware-optimizations=no --host=$HOST CFLAGS=-I../install/include LDFLAGS="-L../install/lib"
 make clean
-cp ../png/Makefile ./
-make -j4 PREFIX=$INSTALL_DIR CROSS_COMPILE=sw_64-sunway-linux-gnu-
-cp .lib/libpng* $INSTALL_DIR/lib/
+cp ../png/Makefile.$CPU_TYPE ./Makefile
+make -j4 PREFIX=$INSTALL_DIR
+cp .libs/libpng* $INSTALL_DIR/lib/
 cd ..
 }
 
@@ -159,11 +173,11 @@ function build_bzip2()
 }
 
 
-#build_zlib
+build_zlib
 #build_openssl
 #build_bzip2
 #build_osip
-build_png
+#build_png
 #build_freetype_no_harfbuzz
 #build_harfbuzz
 #build_freetype_with_harfbuzz
