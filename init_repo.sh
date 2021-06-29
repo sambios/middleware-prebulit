@@ -2,7 +2,7 @@ DIR=`pwd`
 INSTALL_DIR=$DIR/install
 mkdir -p $INSTALL_DIR
 export PKG_CONFIG_PATH=$INSTALL_DIR/lib/pkgconfig
-CPU_TYPE=sw_64
+CPU_TYPE=$1
 if [ "$CPU_TYPE" == "sw_64" ];then
 
     #export CROSS_COMPILE=sw_64-sunway-linux-gnu-
