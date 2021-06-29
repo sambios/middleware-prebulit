@@ -151,6 +151,7 @@ if [ ! -e libpng-1.6.37.tar.gz ]; then
 fi
 
 cd libpng-1.6.37
+cp ../png/config.sub ./
 ./configure --enable-hardware-optimizations=no --host=$HOST CFLAGS=-I../install/include LDFLAGS="-L../install/lib"
 make clean
 cp ../png/Makefile.$CPU_TYPE ./Makefile
@@ -173,11 +174,11 @@ function build_bzip2()
 }
 
 
-build_zlib
+#build_zlib
 #build_openssl
 #build_bzip2
 #build_osip
-#build_png
+build_png
 #build_freetype_no_harfbuzz
 #build_harfbuzz
 #build_freetype_with_harfbuzz
