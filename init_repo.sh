@@ -2,21 +2,22 @@ DIR=`pwd`
 INSTALL_DIR=$DIR/install
 mkdir -p $INSTALL_DIR
 export PKG_CONFIG_PATH=$INSTALL_DIR/lib/pkgconfig
-export CROSS_COMPILE=aarch64-linux-gnu-
-export CC=aarch64-linux-gnu-gcc
-export CXX=aarch64-linux-gnu-g++
-HOST=arm
+#export CROSS_COMPILE=sw_64-sunway-linux-gnu-
+export CC=sw_64-sunway-linux-gnu-gcc
+export CXX=sw_64-sunway-linux-gnu-g++
+HOST=sw_64-sunway
+export PREFIX=$INSTALL_DIR
 
 # get zlib 
 function build_zlib() {
     if [ ! -e zlib ];then
        #rm -fr zlib
        git clone https://github.com/madler/zlib.git zlib
+       git checkout v1.2.11
     fi
     
     cd zlib
-    git checkout v1.2.8
-    ./configure --prefix=$INSTALL_DIR --host=$HOST --static
+    ./configure --prefix=$INSTALL_DIR --static
     make clean
     make -j4 && make install
     cd ..
@@ -36,7 +37,7 @@ function build_osip()
     rm -fr libosip2-$OSIP_VERSION
     tar zxf libosip2-$OSIP_VERSION.tar.gz
     cd libosip2-$OSIP_VERSION
-    ./configure --enable-static --disable-shared --prefix=$INSTALL_DIR --host=$HOST
+    ./configure --enable-static --disable-shared --prefix=$INSTALL_DIR --host=aarch64
     make clean
     make -j4 && make install
     cd ..
@@ -47,14 +48,14 @@ function build_osip()
     rm -fr libexosip2-$OSIP_VERSION
     tar zxf libexosip2-$OSIP_VERSION.tar.gz
     cd libexosip2-$OSIP_VERSION
-    ./configure --enable-static --disable-shared --prefix=$INSTALL_DIR --host=$HOST
+    ./configure --enable-static --disable-shared --prefix=$INSTALL_DIR --host=aarch64
     make clean
     make -j4 && make install
     cd ..
 }
 
 # get freetype2
-function build_freetype()
+function build_freetype_no_harfbuzz()
 {
     if [ ! -e freetype-2.9.1.tar.gz ];then
        wget https://download.savannah.gnu.org/releases/freetype/freetype-2.9.1.tar.gz
@@ -63,7 +64,23 @@ function build_freetype()
     rm -fr freetype-2.9.1
     tar zxf freetype-2.9.1.tar.gz
     cd freetype-2.9.1
-    ./configure --prefix=$INSTALL_DIR --enable-static --disable-shared
+    ./configure --prefix=$INSTALL_DIR --enable-static --disable-shared --with-harfbuzz=no --with-pic=no --with-zlib=no --with-png=no --host=$HOST 
+    make clean
+    make -j4 && make install
+    cd ..
+
+}
+
+function build_freetype_with_harfbuzz()
+{
+    if [ ! -e freetype-2.9.1.tar.gz ];then
+       wget https://download.savannah.gnu.org/releases/freetype/freetype-2.9.1.tar.gz
+    fi
+    
+    rm -fr freetype-2.9.1
+    tar zxf freetype-2.9.1.tar.gz
+    cd freetype-2.9.1
+    ./configure --prefix=$INSTALL_DIR --enable-static --disable-shared --with-harfbuzz=yes --with-pic=yes --with-zlib=yes --with-png=yes --host=$HOST BZIP2_CFLAGS=-I$INSTALL_DIR/include BZIP2_LIBS=-L$INSTALL_DIR/lib 
     make clean
     make -j4 && make install
     cd ..
@@ -79,10 +96,10 @@ function build_openssl()
 
     cd openssl
     git checkout OpenSSL_1_0_0-stable
-    ./config --prefix=$INSTALL_DIR 
+    ./config --prefix=$INSTALL_DIR no-asm -DOPENSSL_NO_STATIC_ENGINE=1 os/compiler:sw_64-sunway-linux-gnu- 
     sed -i 's/-m64//g' Makefile
     make clean
-    make -j4 && make install
+    make && make install
     cd ..
 }
 
@@ -99,13 +116,58 @@ function build_python27()
     cd ..
 }
 
+function build_harfbuzz()
+{
+	if [ ! -e harfbuzz ]; then
+		git clone https://github.com/harfbuzz/harfbuzz.git
+		git checkout 2.1.1
+	fi
+    cd harfbuzz
+    ./autogen.sh --prefix=$INSTALL_DIR --enable-static --disable-shared --host=$HOST --with-freetype=yes --with-glib=no --with-cairo=no --with-pic=yes
+    make && make install
+    cd ..
+}
 
+# download libpng
+function build_png()  
+{
+if [ ! -e libpng-1.6.37.tar.gz ]; then
+  wget https://nchc.dl.sourceforge.net/project/libpng/libpng16/1.6.37/libpng-1.6.37.tar.gz
+  tar zxf libpng-1.6.37.tar.gz
+fi
 
+cd libpng-1.6.37
+./configure --enable-hardware-optimizations=no --host=aarch64-linux
+make clean
+cp ../png/Makefile ./
+make -j4 PREFIX=$INSTALL_DIR CROSS_COMPILE=sw_64-sunway-linux-gnu-
+cp .lib/libpng* $INSTALL_DIR/lib/
+cd ..
+}
+
+function build_bzip2()
+{ 
+    if [ ! -e bzip2-1.0.8 ]; then
+      wget ftp://sourceware.org/pub/bzip2/bzip2-1.0.8.tar.gz
+      tar zxf bzip2-1.0.8.tar.gz
+    fi
+
+    cd bzip2-1.0.8
+    make install PREFIX=$INSTALL_DIR
+    cd ..
+
+}
 
 
 #build_zlib
-build_openssl
+#build_openssl
+#build_bzip2
 #build_osip
-#build_freetype
+build_png
+#build_freetype_no_harfbuzz
+#build_harfbuzz
+#build_freetype_with_harfbuzz
+
 #build_python27
+
 
