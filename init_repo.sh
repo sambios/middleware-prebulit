@@ -73,12 +73,12 @@ function build_freetype_no_harfbuzz()
 {
     if [ ! -e freetype-2.9.1.tar.gz ];then
        wget https://download.savannah.gnu.org/releases/freetype/freetype-2.9.1.tar.gz
+       tar zxf freetype-2.9.1.tar.gz
     fi
     
-    rm -fr freetype-2.9.1
-    tar zxf freetype-2.9.1.tar.gz
     cd freetype-2.9.1
-    ./configure --prefix=$INSTALL_DIR --enable-static --disable-shared --with-harfbuzz=no --with-pic=no --with-zlib=no --with-png=no --host=$HOST 
+    cp ../freetype/config.sub builds/unix/
+    ./configure --prefix=$INSTALL_DIR --enable-static --disable-shared --with-harfbuzz=no --with-pic=no --with-zlib=no --with-png=no --host=$HOST
     make clean
     make -j4 && make install
     cd ..
@@ -89,11 +89,11 @@ function build_freetype_with_harfbuzz()
 {
     if [ ! -e freetype-2.9.1.tar.gz ];then
        wget https://download.savannah.gnu.org/releases/freetype/freetype-2.9.1.tar.gz
+       tar zxf freetype-2.9.1.tar.gz
     fi
     
-    rm -fr freetype-2.9.1
-    tar zxf freetype-2.9.1.tar.gz
     cd freetype-2.9.1
+    cp ../freetype/config.sub builds/unix/
     ./configure --prefix=$INSTALL_DIR --enable-static --disable-shared --with-harfbuzz=yes --with-pic=yes --with-zlib=yes --with-png=yes --host=$HOST BZIP2_CFLAGS=-I$INSTALL_DIR/include BZIP2_LIBS=-L$INSTALL_DIR/lib 
     make clean
     make -j4 && make install
@@ -178,8 +178,9 @@ function build_bzip2()
 #build_openssl
 #build_bzip2
 #build_osip
-build_png
-#build_freetype_no_harfbuzz
+#build_png
+
+build_freetype_no_harfbuzz
 #build_harfbuzz
 #build_freetype_with_harfbuzz
 
