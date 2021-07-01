@@ -2,7 +2,13 @@ DIR=`pwd`
 INSTALL_DIR=$DIR/install
 mkdir -p $INSTALL_DIR
 export PKG_CONFIG_PATH=$INSTALL_DIR/lib/pkgconfig
-CPU_TYPE=$1
+if [ ! -n "$1" ]; then
+     CPU_TYPE=sw_64
+else
+     CPU_TYPE=$1
+fi
+echo "CPU_TYPE=$CPU_TYPE"
+
 if [ "$CPU_TYPE" == "sw_64" ];then
 
     #export CROSS_COMPILE=sw_64-sunway-linux-gnu-
@@ -173,14 +179,28 @@ function build_bzip2()
 
 }
 
+function build_mp3lame()
+{ 
+    if [ ! -e lame-3.100.tar.gz ]; then
+      wget https://nchc.dl.sourceforge.net/project/lame/lame/3.100/lame-3.100.tar.gz
+      tar zxf lame-3.100.tar.gz
+    fi
+
+    cd lame-3.100
+    cp -f lame/config.sub lame-3.100/
+    ./configure --prefix=$PREFIX --host=$HOST --disable-shared
+    make -j4 && make install
+    cd ..
+
+}
 
 #build_zlib
 #build_openssl
 #build_bzip2
 #build_osip
 #build_png
-
-build_freetype_no_harfbuzz
+build_mp3lame
+#build_freetype_no_harfbuzz
 #build_harfbuzz
 #build_freetype_with_harfbuzz
 
